@@ -30,17 +30,17 @@ import camera
 
 app = Flask(__name__)
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PORT'] = 3308
-app.config['MYSQL_PASSWORD'] = 'your pwd'
-app.config['MYSQL_DB'] = 'quizapp'
+app.config['MYSQL_HOST'] = 'kvgceexam.com'
+app.config['MYSQL_USER'] = 'kvgce'
+app.config['MYSQL_PORT'] = 3306
+app.config['MYSQL_PASSWORD'] = '100'
+app.config['MYSQL_DB'] = 'quizappstructure'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-app.config['MAIL_SERVER']='smtp.stackmail.com'
+app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = 'jeevanraisonangeri@gmail.com'
-app.config['MAIL_PASSWORD'] = 'jEevu@g1'
+app.config['MAIL_USERNAME'] = 'kvgceexam@gmail.com'
+app.config['MAIL_PASSWORD'] = '100Scholarshipexam@kvgce'
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 
@@ -69,9 +69,9 @@ app.secret_key= 'sem6project'
 
 mysql = MySQL(app)
 
-sender = 'jeevanraisonangeri@gmail.com'
+sender = 'kvgceexam@gmail.com'
 
-YOUR_DOMAIN = 'http://localhost:5000'
+YOUR_DOMAIN = 'https://www.kvgceexam.com'
 
 @app.before_request
 def make_session_permanent():
@@ -228,6 +228,7 @@ def payment():
 
 @app.route('/')
 def index():
+	# flash('Exam Time 10:00 AM to 11:50 AM Date : 10/06/2022, Give Test by clicking the button below (NOTE : Answers cannot be edited once Submited )','success')
 	return render_template('index.html')
 
 @app.errorhandler(404) 
@@ -323,7 +324,7 @@ def lostpassword():
 			sesOTPfp = generateOTP()
 			session['tempOTPfp'] = sesOTPfp
 			session['seslpemail'] = lpemail
-			msg1 = Message('MyProctor.ai - OTP Verification for Lost Password', sender = sender, recipients = [lpemail])
+			msg1 = Message('KVGCE_EXAM - OTP Verification for Lost Password', sender = sender, recipients = [lpemail])
 			msg1.body = "Your OTP Verfication code for reset password is "+sesOTPfp+"."
 			mail.send(msg1)
 			return redirect(url_for('verifyOTPfp')) 
@@ -392,12 +393,28 @@ def register():
 		session['tempPassword'] = password
 		session['tempUT'] = user_type
 		session['tempImage'] = imgdata
-		sesOTP = generateOTP()
-		session['tempOTP'] = sesOTP
-		msg1 = Message('MyProctor.ai - OTP Verification', sender = sender, recipients = [email])
-		msg1.body = "New Account opening - Your OTP Verfication code is "+sesOTP+"."
-		mail.send(msg1)
-		return redirect(url_for('verifyEmail')) 
+		dbName = session['tempName']
+		dbEmail = session['tempEmail']
+		dbPassword = session['tempPassword']
+		dbUser_type = session['tempUT']
+		dbImgdata = session['tempImage']
+		cur = mysql.connection.cursor()
+		ar = cur.execute('INSERT INTO quizappstructure.users(name, email, password, user_type, user_image, user_login) values(%s,%s,%s,%s,%s,%s)', (dbName, dbEmail, dbPassword, dbUser_type, dbImgdata,0))
+		mysql.connection.commit()
+		if ar > 0:
+			flash("Thanks for registering! You are sucessfully verified!.")
+			return  redirect(url_for('login'))
+		else:
+			flash("Error Occurred!")
+			return  redirect(url_for('login')) 
+		cur.close()
+		session.clear()
+		# sesOTP = generateOTP()
+		# session['tempOTP'] = sesOTP
+		# msg1 = Message('KVGCE_EXAM - OTP Verification', sender = sender, recipients = [email])
+		# msg1.body = "New Account opening - Your OTP Verfication code is "+sesOTP+"."
+		# mail.send(msg1)
+		# return redirect(url_for('verifyEmail')) 
 	return render_template('register.html')
 
 @app.route('/login', methods=['GET','POST'])
@@ -420,7 +437,7 @@ def login():
 			image1 = cv2.imdecode(nparr1, cv2.COLOR_BGR2GRAY)
 			image2 = cv2.imdecode(nparr2, cv2.COLOR_BGR2GRAY)
 			img_result  = DeepFace.verify(image1, image2, enforce_detection = False)
-			if img_result["verified"] == True and password == password_candidate:
+			if password == password_candidate:
 				results2 = cur.execute('UPDATE users set user_login = 1 where email = %s' , [email])
 				mysql.connection.commit()
 				if results2 > 0:
@@ -457,7 +474,7 @@ def verifyEmail():
 		dbImgdata = session['tempImage']
 		if(theOTP == mOTP):
 			cur = mysql.connection.cursor()
-			ar = cur.execute('INSERT INTO users(name, email, password, user_type, user_image, user_login) values(%s,%s,%s,%s,%s,%s)', (dbName, dbEmail, dbPassword, dbUser_type, dbImgdata,0))
+			ar = cur.execute('INSERT INTO quizappstructure.users(name, email, password, user_type, user_image, user_login) values(%s,%s,%s,%s,%s,%s)', (dbName, dbEmail, dbPassword, dbUser_type, dbImgdata,0))
 			mysql.connection.commit()
 			if ar > 0:
 				flash("Thanks for registering! You are sucessfully verified!.")
@@ -1262,7 +1279,7 @@ def share_details_emails():
 		neg_marks = request.form['neg_marks']
 		calc = request.form['calc']
 		emailssharelist = request.form['emailssharelist']
-		msg1 = Message('EXAM DETAILS - MyProctor.ai', sender = sender, recipients = [emailssharelist])
+		msg1 = Message('EXAM DETAILS - KVGCE_EXAM', sender = sender, recipients = [emailssharelist])
 		msg1.body = " ".join(["EXAM-ID:", tid, "SUBJECT:", subject, "TOPIC:", topic, "DURATION:", duration, "START", start, "END", end, "PASSWORD", password, "NEGATIVE MARKS in %:", neg_marks,"CALCULATOR ALLOWED:",calc ]) 
 		mail.send(msg1)
 		flash('Emails sended sucessfully!', 'success')
@@ -1328,7 +1345,7 @@ def test_update_time():
 		cur = mysql.connection.cursor()
 		time_left = request.form['time']
 		testid = request.form['testid']
-		cur.execute('UPDATE studentTestInfo set time_left=SEC_TO_TIME(%s) where test_id = %s and email = %s and uid = %s and completed=0', (time_left, testid, session['email'], session['uid']))
+		cur.execute('UPDATE studenttestinfo set time_left=SEC_TO_TIME(%s) where test_id = %s and email = %s and uid = %s and completed=0', (time_left, testid, session['email'], session['uid']))
 		mysql.connection.commit()
 		t1 = cur.rowcount
 		cur.close()
@@ -1336,7 +1353,7 @@ def test_update_time():
 			return "time recorded updated"
 		else:
 			cur = mysql.connection.cursor()
-			cur.execute('INSERT into studentTestInfo (email, test_id,time_left,uid) values(%s,%s,SEC_TO_TIME(%s),%s)', (session['email'], testid, time_left, session['uid']))
+			cur.execute('INSERT into studenttestinfo (email, test_id,time_left,uid) values(%s,%s,SEC_TO_TIME(%s),%s)', (session['email'], testid, time_left, session['uid']))
 			t2 = mysql.connection.commit()
 			t2 = cur.rowcount
 			cur.close()
@@ -1360,12 +1377,12 @@ def give_test():
 			cresults = cur1.fetchone()
 			imgdata2 = cresults['user_image']
 			cur1.close()
-			nparr1 = np.frombuffer(base64.b64decode(imgdata1), np.uint8)
-			nparr2 = np.frombuffer(base64.b64decode(imgdata2), np.uint8)
-			image1 = cv2.imdecode(nparr1, cv2.COLOR_BGR2GRAY)
-			image2 = cv2.imdecode(nparr2, cv2.COLOR_BGR2GRAY)
-			img_result  = DeepFace.verify(image1, image2, enforce_detection = False)
-			if img_result["verified"] == True:
+			# nparr1 = np.frombuffer(base64.b64decode(imgdata1), np.uint8)
+			# nparr2 = np.frombuffer(base64.b64decode(imgdata2), np.uint8)
+			# image1 = cv2.imdecode(nparr1, cv2.COLOR_BGR2GRAY)
+			# image2 = cv2.imdecode(nparr2, cv2.COLOR_BGR2GRAY)
+			# img_result  = DeepFace.verify(image1, image2, enforce_detection = False)
+			if True:
 				cur = mysql.connection.cursor()
 				results = cur.execute('SELECT * from teachers where test_id = %s', [test_id])
 				if results > 0:
@@ -1385,8 +1402,8 @@ def give_test():
 						now = now.strftime("%Y-%m-%d %H:%M:%S")
 						now = datetime.strptime(now,"%Y-%m-%d %H:%M:%S")
 						if datetime.strptime(start,"%Y-%m-%d %H:%M:%S") < now and datetime.strptime(end,"%Y-%m-%d %H:%M:%S") > now:
-							results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where email = %s and test_id = %s', (session['email'], test_id))
-							if results > 0:
+							results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studenttestinfo where email = %s and test_id = %s', (session['email'], test_id))
+							if results:
 								results = cur.fetchone()
 								is_completed = results['completed']
 								if is_completed == 0:
@@ -1407,9 +1424,9 @@ def give_test():
 									flash('Exam already given', 'success')
 									return redirect(url_for('give_test'))
 							else:
-								cur.execute('INSERT into studentTestInfo (email, test_id,time_left,uid) values(%s,%s,SEC_TO_TIME(%s),%s)', (session['email'], test_id, duration, session['uid']))
+								cur.execute('INSERT into studenttestinfo (email, test_id,time_left,uid) values(%s,%s,SEC_TO_TIME(%s),%s)', (session['email'], test_id, duration, session['uid']))
 								mysql.connection.commit()
-								results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where email = %s and test_id = %s and uid = %s', (session['email'], test_id, session['uid']))
+								results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studenttestinfo where email = %s and test_id = %s and uid = %s', (session['email'], test_id, session['uid']))
 								if results > 0:
 									results = cur.fetchone()
 									is_completed = results['completed']
@@ -1485,7 +1502,7 @@ def test(testid):
 				cur = mysql.connection.cursor()
 				time_left = request.form['time']
 				try:
-					cur.execute('UPDATE studentTestInfo set time_left=SEC_TO_TIME(%s) where test_id = %s and email = %s and uid = %s and completed=0', (time_left, testid, session['email'], session['uid']))
+					cur.execute('UPDATE studenttestinfo set time_left=SEC_TO_TIME(%s) where test_id = %s and email = %s and uid = %s and completed=0', (time_left, testid, session['email'], session['uid']))
 					mysql.connection.commit()
 					cur.close()
 					return json.dumps({'time':'fired'})
@@ -1493,7 +1510,7 @@ def test(testid):
 					pass
 			else:
 				cur = mysql.connection.cursor()
-				cur.execute('UPDATE studentTestInfo set completed=1,time_left=sec_to_time(0) where test_id = %s and email = %s and uid = %s', (testid, session['email'],session['uid']))
+				cur.execute('UPDATE studenttestinfo set completed=1,time_left=sec_to_time(0) where test_id = %s and email = %s and uid = %s', (testid, session['email'],session['uid']))
 				mysql.connection.commit()
 				cur.close()
 				flash("Exam submitted successfully", 'info')
@@ -1504,10 +1521,10 @@ def test(testid):
 			cur = mysql.connection.cursor()
 			cur.execute('SELECT test_id, qid, q, marks from longqa where test_id = %s ORDER BY RAND()',[testid])
 			callresults1 = cur.fetchall()
-			cur.execute('SELECT time_to_sec(time_left) as duration from studentTestInfo where completed = 0 and test_id = %s and email = %s and uid = %s', (testid, session['email'], session['uid']))
-			studentTestInfo = cur.fetchone()
-			if studentTestInfo != None:
-				duration = studentTestInfo['duration']
+			cur.execute('SELECT time_to_sec(time_left) as duration from studenttestinfo where completed = 0 and test_id = %s and email = %s and uid = %s', (testid, session['email'], session['uid']))
+			studenttestinfo = cur.fetchone()
+			if studenttestinfo != None:
+				duration = studenttestinfo['duration']
 				cur.execute('SELECT test_id, subject, topic, proctoring_type from teachers where test_id = %s',[testid])
 				testDetails = cur.fetchone()
 				subject = testDetails['subject']
@@ -1541,10 +1558,10 @@ def test(testid):
 				mysql.connection.commit()
 			else:
 				if insertStudentData > 0:
-					insertStudentTestInfoData = cur.execute('UPDATE studentTestInfo set completed = 1 where test_id = %s and email = %s and uid = %s', (test_id, session['email'], session['uid']))
+					insertstudenttestinfoData = cur.execute('UPDATE studenttestinfo set completed = 1 where test_id = %s and email = %s and uid = %s', (test_id, session['email'], session['uid']))
 					mysql.connection.commit()
 					cur.close()
-					if insertStudentTestInfoData > 0:
+					if insertstudenttestinfoData > 0:
 						flash('Successfully Exam Submitted', 'success')
 						return redirect(url_for('student_index'))
 					else:
@@ -1561,10 +1578,10 @@ def test(testid):
 			cur = mysql.connection.cursor()
 			cur.execute('SELECT test_id, qid, q, marks, compiler from practicalqa where test_id = %s ORDER BY RAND()',[testid])
 			callresults1 = cur.fetchall()
-			cur.execute('SELECT time_to_sec(time_left) as duration from studentTestInfo where completed = 0 and test_id = %s and email = %s and uid = %s', (testid, session['email'], session['uid']))
-			studentTestInfo = cur.fetchone()
-			if studentTestInfo != None:
-				duration = studentTestInfo['duration']
+			cur.execute('SELECT time_to_sec(time_left) as duration from studenttestinfo where completed = 0 and test_id = %s and email = %s and uid = %s', (testid, session['email'], session['uid']))
+			studenttestinfo = cur.fetchone()
+			if studenttestinfo != None:
+				duration = studenttestinfo['duration']
 				cur.execute('SELECT test_id, subject, topic, proctoring_type from teachers where test_id = %s',[testid])
 				testDetails = cur.fetchone()
 				subject = testDetails['subject']
@@ -1592,10 +1609,10 @@ def test(testid):
 			insertStudentData = cur.execute('INSERT INTO practicaltest(email,test_id,qid,code,input,executed,uid) values(%s,%s,%s,%s,%s,%s,%s)', (session['email'], testid, "1", codeByStudent, inputByStudent, executedByStudent, session['uid']))
 			mysql.connection.commit()
 			if insertStudentData > 0:
-				insertStudentTestInfoData = cur.execute('UPDATE studentTestInfo set completed = 1 where test_id = %s and email = %s and uid = %s', (test_id, session['email'], session['uid']))
+				insertstudenttestinfoData = cur.execute('UPDATE studenttestinfo set completed = 1 where test_id = %s and email = %s and uid = %s', (test_id, session['email'], session['uid']))
 				mysql.connection.commit()
 				cur.close()
-				if insertStudentTestInfoData > 0:
+				if insertstudenttestinfoData > 0:
 					flash('Successfully Exam Submitted', 'success')
 					return redirect(url_for('student_index'))
 				else:
@@ -1746,7 +1763,7 @@ def student_results(email, testid):
 		if request.method =='GET':
 			if et['test_type'] == "objective":
 				cur = mysql.connection.cursor()
-				results = cur.execute('select users.name as name,users.email as email, studentTestInfo.test_id as test_id from studentTestInfo, users where test_id = %s and completed = 1 and  users.user_type = %s and studentTestInfo.email=users.email ', (testid,'student'))
+				results = cur.execute('select users.name as name,users.email as email, studenttestinfo.test_id as test_id from studenttestinfo, users where test_id = %s and completed = 1 and  users.user_type = %s and studenttestinfo.email=users.email ', (testid,'student'))
 				results = cur.fetchall()
 				cur.close()
 				final = []
@@ -1832,4 +1849,4 @@ def test_generate():
 			return None
 
 if __name__ == "__main__":
-	app.run(debug=False)
+	app.run(host = "0.0.0.0",debug=True)

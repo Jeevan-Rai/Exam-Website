@@ -113,7 +113,7 @@ window.onfocus = function(event) {
         }
 
       } 
-      setTimeout(captureSnapshot, 5000);
+      setTimeout(captureSnapshot, 10000);
     }
 
 $(document).ready( function() {
@@ -353,7 +353,7 @@ var ques_grid = function() {
             color = '#f44336';
         }
         j = i<10 ? "0" + i: i
-        $('#question-list').append('<div class="col-sm-2"><button class="btn btn-primary" style="background-color:' + color + '; color:white;"><div class="question" style="background-color:' + color + '; color:white;">' + j + '</div></div></div>');
+        $('#question-list').append('<div class="col-sm-2" style="margin:5px;"><button class="btn btn-primary" style="background-color:' + color + '; color:white;"><div class="question" style="background-color:' + color + '; color:white;">' + j + '</div></div></div>');
     }
     $('.question').click(function() {
         var id = parseInt($(this).text());

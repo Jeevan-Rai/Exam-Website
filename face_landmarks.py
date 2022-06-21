@@ -3,8 +3,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-def get_landmark_model(saved_model="models/pose_model"):
-    model = keras.models.load_model(saved_model)
+def get_landmark_model(saved_model="/root/myFlaskApp/models/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/saved_model"):
+    model = tf.keras.models.load_model(saved_model)
+    # model = tf.saved_model.load(saved_model)
     return model
 
 def get_square_box(box):
